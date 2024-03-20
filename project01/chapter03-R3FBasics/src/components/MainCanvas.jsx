@@ -3,6 +3,7 @@
 import { Canvas } from "@react-three/fiber";
 import { Color } from "three";
 import * as THREE from "three";
+import { Physics } from "@react-three/cannon";
 
 import Meshes from "./Meshes";
 import Lights from "./Lights";
@@ -28,11 +29,19 @@ const MainCanvas = () => {
       <Controls />
       <Lights />
 
-      <Meshes />
+      <Physics
+        gravity={[0, -9, 0]}
+        defaultContactMaterial={{
+          restitution: 0.1,
+          friction: 1,
+        }}
+      >
+        <Meshes />
+      </Physics>
 
       {/* <GLBModel /> */}
-      <PostProcessor />
-      <Dancer />
+      {/* <PostProcessor /> */}
+      {/* <Dancer /> */}
     </Canvas>
   );
 };
