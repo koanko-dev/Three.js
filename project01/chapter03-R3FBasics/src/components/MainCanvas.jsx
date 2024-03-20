@@ -6,6 +6,7 @@ import * as THREE from "three";
 import Meshes from "./Meshes";
 import Lights from "./Lights";
 import Controls from "./Controls";
+import GLBModel from "./GLBModel";
 
 const MainCanvas = () => {
   return (
@@ -25,6 +26,8 @@ const MainCanvas = () => {
       <Lights />
 
       <Meshes />
+
+      <GLBModel />
     </Canvas>
   );
 };
