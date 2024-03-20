@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react/no-unknown-property */
 import { Canvas } from "@react-three/fiber";
 import { Color } from "three";
@@ -8,6 +9,7 @@ import Lights from "./Lights";
 import Controls from "./Controls";
 import GLBModel from "./GLBModel";
 import { Dancer } from "./Dancer";
+import PostProcessor from "./PostProcessor";
 
 const MainCanvas = () => {
   return (
@@ -29,6 +31,7 @@ const MainCanvas = () => {
       <Meshes />
 
       {/* <GLBModel /> */}
+      <PostProcessor />
       <Dancer />
     </Canvas>
   );
