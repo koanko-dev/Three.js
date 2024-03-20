@@ -7,6 +7,7 @@ import Meshes from "./Meshes";
 import Lights from "./Lights";
 import Controls from "./Controls";
 import GLBModel from "./GLBModel";
+import { Dancer } from "./Dancer";
 
 const MainCanvas = () => {
   return (
@@ -27,7 +28,8 @@ const MainCanvas = () => {
 
       <Meshes />
 
-      <GLBModel />
+      {/* <GLBModel /> */}
+      <Dancer />
     </Canvas>
   );
 };
