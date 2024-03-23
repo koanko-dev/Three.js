@@ -1,9 +1,18 @@
 /* eslint-disable react/no-unknown-property */
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useRecoilValue } from "recoil";
-import { useAnimations, useGLTF, useScroll } from "@react-three/drei";
+import {
+  Box,
+  Circle,
+  Points,
+  useAnimations,
+  useGLTF,
+  useScroll,
+  useTexture,
+} from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
+import * as THREE from "three";
 
 import { IsEnteredAtom } from "../stores";
 import Loader from "./Loader";
@@ -18,6 +27,19 @@ const Dancer = () => {
   const { scene, animations } = useGLTF("/models/dancer.glb");
 
   const { actions } = useAnimations(animations, dancerRef);
+
+  const texture = useTexture("/texture/5.png");
+
+  const { positions } = useMemo(() => {
+    const count = 500;
+    const positions = new Float32Array(count * 3);
+
+    for (let i = 0; i < count * 3; i += 1) {
+      positions[i] = (Math.random() - 0.5) * 25;
+    }
+
+    return { positions };
+  }, []);
 
   const scroll = useScroll();
 
@@ -113,8 +135,76 @@ const Dancer = () => {
   if (isEntered) {
     return (
       <>
-        <ambientLight intensity={2} />
         <primitive ref={dancerRef} object={scene} scale={0.05} />
+        <ambientLight intensity={2} />
+        <rectAreaLight position={[0, 10, 0]} intensity={30} />
+        <pointLight
+          position={[0, 5, 0]}
+          intensity={0}
+          castShadow
+          receiveShadow
+        />
+        <hemisphereLight
+          position={[0, 5, 0]}
+          intensity={0}
+          groundColor={"lime"}
+          color={"blue"}
+        />
+
+        {/* 전체 배경 */}
+        <Box args={[100, 100, 100]} position={[0, 0, 0]}>
+          <meshStandardMaterial color={"#dc4f00"} side={THREE.DoubleSide} />
+        </Box>
+
+        {/* 원형 바닥 판 */}
+        <Circle
+          castShadow
+          receiveShadow
+          args={[8, 32]}
+          rotation-x={-Math.PI / 2}
+          position-y={-4.4}
+        >
+          <meshStandardMaterial color={"#dc4f00"} side={THREE.DoubleSide} />
+        </Circle>
+
+        <Points positions={positions.slice(0, positions.length / 3)}>
+          <pointsMaterial
+            size={0.5}
+            color={new THREE.Color("#dc4f00")}
+            sizeAttenuation // 원근에 따라 크기를 조절
+            depthWrite // 앞에 있는 것이 뒤에 있는 것을 가리게
+            alphaMap={texture}
+            transparent
+            alphaTest={0.001}
+          />
+        </Points>
+        <Points
+          positions={positions.slice(
+            positions.length / 3,
+            (positions.length * 2) / 3
+          )}
+        >
+          <pointsMaterial
+            size={0.5}
+            color={new THREE.Color("#dc4f00")}
+            sizeAttenuation // 원근에 따라 크기를 조절
+            depthWrite // 앞에 있는 것이 뒤에 있는 것을 가리게
+            alphaMap={texture}
+            transparent
+            alphaTest={0.001}
+          />
+        </Points>
+        <Points positions={positions.slice((positions.length * 2) / 3)}>
+          <pointsMaterial
+            size={0.5}
+            color={new THREE.Color("#dc4f00")}
+            sizeAttenuation // 원근에 따라 크기를 조절
+            depthWrite // 앞에 있는 것이 뒤에 있는 것을 가리게
+            alphaMap={texture}
+            transparent
+            alphaTest={0.001}
+          />
+        </Points>
       </>
     );
   }
