@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unknown-property */
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRecoilValue } from "recoil";
 import {
   Box,
@@ -18,14 +18,25 @@ import { IsEnteredAtom } from "../stores";
 import Loader from "./Loader";
 
 let timeline;
+const colors = {
+  boxMaterialColor: "#dc4f00",
+};
 const Dancer = () => {
   const three = useThree();
+  const [currentAnimation, setCurrentAnimation] = useState("wave");
+  const [rotateFinished, setRotateFinished] = useState(false);
 
   // useRecoilValue: isEntered 값만 사용
   const isEntered = useRecoilValue(IsEnteredAtom);
   const dancerRef = useRef(null);
-  const { scene, animations } = useGLTF("/models/dancer.glb");
+  const boxRef = useRef(null);
+  const starGroupRef01 = useRef(null);
+  const starGroupRef02 = useRef(null);
+  const starGroupRef03 = useRef(null);
+  const reactAreaLightRef = useRef(null);
+  const hemisphereLightRef = useRef(null);
 
+  const { scene, animations } = useGLTF("/models/dancer.glb");
   const { actions } = useAnimations(animations, dancerRef);
 
   const texture = useTexture("/texture/5.png");
@@ -49,13 +60,54 @@ const Dancer = () => {
 
     if (!isEntered) return;
     timeline.seek(scroll.offset * timeline.duration());
+    // colors에 저장한 값으로 배경 색상을 가지게 하기
+    boxRef.current.material.color = new THREE.Color(colors.boxMaterialColor);
+
+    // 회전이 끝난 마지막에는 breakdancingEnd 애니메이션 실행
+    if (rotateFinished) {
+      setCurrentAnimation("breakdancingEnd");
+    } else {
+      setCurrentAnimation("wave");
+    }
   });
 
   useEffect(() => {
     if (!isEntered) return;
+    three.camera.lookAt(1, 2, 0);
     actions["wave"].play();
-  }, [actions, isEntered]);
+    three.scene.background = new THREE.Color(colors.boxMaterialColor);
+    scene.traverse((obj) => {
+      if (obj.isMesh) {
+        obj.castShadow = true;
+        obj.receiveShadow = true;
+      }
+    });
+  }, [actions, isEntered, three.camera, three.scene, scene]);
 
+  useEffect(() => {
+    let timeout;
+    if (currentAnimation === "wave") {
+      actions[currentAnimation]?.reset().fadeIn(0.5).play();
+    } else {
+      actions[currentAnimation]
+        ?.reset()
+        .fadeIn(0.5)
+        .play()
+        .setLoop(THREE.LoopOnce, 1);
+
+      timeout = setTimeout(() => {
+        if (actions[currentAnimation]) {
+          actions[currentAnimation].paused = true;
+        }
+      }, 8000);
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [actions, currentAnimation]);
+
+  // 입장시 효과
   useEffect(() => {
     if (!isEntered) return;
     if (!dancerRef.current) return;
@@ -83,6 +135,34 @@ const Dancer = () => {
         duration: 2.5,
       }
     );
+
+    gsap.fromTo(
+      colors,
+      { boxMaterialColor: "#0c0400" },
+      { duration: 2.5, boxMaterialColor: "#dc4f00" }
+    );
+
+    gsap.to(starGroupRef01.current, {
+      yoyo: true, // 재생, 역재싱이 이어서 반복하는 것
+      duration: 2,
+      repeat: -1,
+      ease: "linear",
+      size: 0.05,
+    });
+    gsap.to(starGroupRef02.current, {
+      yoyo: true,
+      duration: 3,
+      repeat: -1,
+      ease: "linear",
+      size: 0.05,
+    });
+    gsap.to(starGroupRef03.current, {
+      yoyo: true,
+      duration: 4,
+      repeat: -1,
+      ease: "linear",
+      size: 0.05,
+    });
   }, [isEntered, three.camera.position, three.camera.rotation]);
 
   useEffect(() => {
@@ -137,7 +217,11 @@ const Dancer = () => {
       <>
         <primitive ref={dancerRef} object={scene} scale={0.05} />
         <ambientLight intensity={2} />
-        <rectAreaLight position={[0, 10, 0]} intensity={30} />
+        <rectAreaLight
+          ref={reactAreaLightRef}
+          position={[0, 10, 0]}
+          intensity={30}
+        />
         <pointLight
           position={[0, 5, 0]}
           intensity={0}
@@ -145,6 +229,7 @@ const Dancer = () => {
           receiveShadow
         />
         <hemisphereLight
+          ref={hemisphereLightRef}
           position={[0, 5, 0]}
           intensity={0}
           groundColor={"lime"}
@@ -152,7 +237,7 @@ const Dancer = () => {
         />
 
         {/* 전체 배경 */}
-        <Box args={[100, 100, 100]} position={[0, 0, 0]}>
+        <Box ref={boxRef} args={[100, 100, 100]} position={[0, 0, 0]}>
           <meshStandardMaterial color={"#dc4f00"} side={THREE.DoubleSide} />
         </Box>
 
@@ -169,6 +254,7 @@ const Dancer = () => {
 
         <Points positions={positions.slice(0, positions.length / 3)}>
           <pointsMaterial
+            ref={starGroupRef01}
             size={0.5}
             color={new THREE.Color("#dc4f00")}
             sizeAttenuation // 원근에 따라 크기를 조절
@@ -185,6 +271,7 @@ const Dancer = () => {
           )}
         >
           <pointsMaterial
+            ref={starGroupRef02}
             size={0.5}
             color={new THREE.Color("#dc4f00")}
             sizeAttenuation // 원근에 따라 크기를 조절
@@ -196,6 +283,7 @@ const Dancer = () => {
         </Points>
         <Points positions={positions.slice((positions.length * 2) / 3)}>
           <pointsMaterial
+            ref={starGroupRef03}
             size={0.5}
             color={new THREE.Color("#dc4f00")}
             sizeAttenuation // 원근에 따라 크기를 조절
