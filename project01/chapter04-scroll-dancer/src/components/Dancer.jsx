@@ -71,6 +71,7 @@ const Dancer = () => {
     }
   });
 
+  // 입장시 에니메이션 재생
   useEffect(() => {
     if (!isEntered) return;
     three.camera.lookAt(1, 2, 0);
@@ -84,6 +85,7 @@ const Dancer = () => {
     });
   }, [actions, isEntered, three.camera, three.scene, scene]);
 
+  // 마지막 장면 애니메이션 멈춤
   useEffect(() => {
     let timeout;
     if (currentAnimation === "wave") {
@@ -100,11 +102,12 @@ const Dancer = () => {
           actions[currentAnimation].paused = true;
         }
       }, 8000);
-
-      return () => {
-        clearTimeout(timeout);
-      };
     }
+
+    return () => {
+      clearTimeout(timeout);
+      actions[currentAnimation]?.reset().fadeOut(0.5).stop();
+    };
   }, [actions, currentAnimation]);
 
   // 입장시 효과
@@ -119,20 +122,21 @@ const Dancer = () => {
         z: 5,
       },
       {
+        duration: 2.5,
         x: 0,
         y: 6,
         z: 12,
-        duration: 2.5,
       }
     );
+
     gsap.fromTo(
       three.camera.rotation,
       {
         z: Math.PI,
       },
       {
-        z: 0,
         duration: 2.5,
+        z: 0,
       }
     );
 
@@ -145,7 +149,7 @@ const Dancer = () => {
     gsap.to(starGroupRef01.current, {
       yoyo: true, // 재생, 역재싱이 이어서 반복하는 것
       duration: 2,
-      repeat: -1,
+      repeat: -1, // -1 일 경우 무한하게 반복
       ease: "linear",
       size: 0.05,
     });
@@ -165,9 +169,15 @@ const Dancer = () => {
     });
   }, [isEntered, three.camera.position, three.camera.rotation]);
 
+  // 페이지 위치에 따라 조정
   useEffect(() => {
     if (!isEntered) return;
     if (!dancerRef.current) return;
+
+    const pivot = new THREE.Group(); // 특정 대상을 기준으로 카메라를 공전하고 싶을 때 사용
+    pivot.position.copy(dancerRef.current.position);
+    pivot.add(three.camera);
+    three.scene.add(pivot);
 
     timeline = gsap.timeline();
     // 타임라인의 0.5 위치에서 이런 애니메이션 실행
@@ -176,11 +186,10 @@ const Dancer = () => {
         dancerRef.current.rotation,
         {
           duration: 4,
-          y: -4 * Math.PI,
+          y: Math.PI,
         },
         0.5
       )
-      // 앞의 애니메이션과 동일한 시점에 실행
       // 3의 위치에서 시작해, 0으로 돌아옴
       .from(
         dancerRef.current.position,
@@ -188,7 +197,7 @@ const Dancer = () => {
           duration: 4,
           x: 3,
         },
-        "<"
+        "<" // 앞의 애니메이션과 동일한 시점에 실행
       )
       .to(
         three.camera.position,
@@ -199,7 +208,28 @@ const Dancer = () => {
         },
         "<"
       )
-      // 앞의 3개 애니메이션 끝난 뒤 실행
+      .to(
+        colors,
+        {
+          duration: 10,
+          boxMaterialColor: "#0C0400",
+        },
+        "<"
+      )
+      .to(pivot.rotation, {
+        duration: 10,
+        y: Math.PI,
+      })
+      .to(
+        three.camera.position,
+        {
+          duration: 10,
+          x: -4,
+          z: 12,
+        },
+        "<"
+      )
+      // 앞의 애니메이션 끝난 뒤 실행
       .to(three.camera.position, {
         duration: 10,
         x: 0,
@@ -209,8 +239,40 @@ const Dancer = () => {
         duration: 10,
         x: 0,
         z: 16,
-      });
-  }, [isEntered, three.camera.position]);
+        // 이 메서드는 애니메이션이 실행되는 시점에 호출됨
+        onUpdate: () => {
+          setRotateFinished(false);
+        },
+      })
+      .to(hemisphereLightRef.current, {
+        duration: 5,
+        intensity: 30,
+      })
+      .to(
+        pivot.rotation,
+        {
+          duration: 15,
+          y: Math.PI * 4,
+          onUpdate: () => {
+            setRotateFinished(true);
+          },
+        },
+        "<"
+      )
+      .to(
+        colors,
+        {
+          duration: 15,
+          boxMaterialColor: "#DC4F00",
+        },
+        "<"
+      );
+
+    // 컴포넌트 소멸될 때 pivot 삭제F
+    return () => {
+      three.scene.remove(pivot);
+    };
+  }, [isEntered, three.camera, three.scene]);
 
   if (isEntered) {
     return (
