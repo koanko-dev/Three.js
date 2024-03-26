@@ -10,6 +10,8 @@ const MovingDOM = () => {
   // DOM 요소를 적용하기 위해 scroll 가져오기
   const scroll = useScroll();
 
+  const fixed = document.getElementById("fixed");
+
   const article01Ref = useRef(null);
   const article02Ref = useRef(null);
   const article03Ref = useRef(null);
@@ -19,6 +21,7 @@ const MovingDOM = () => {
   useFrame(() => {
     if (
       !isEntered ||
+      !fixed ||
       !article01Ref.current ||
       !article02Ref.current ||
       !article03Ref.current ||
@@ -35,6 +38,14 @@ const MovingDOM = () => {
     // 커브는 중간이 1을 리턴한다. 처음과 끝에서는 0을 리턴한다.
     article03Ref.current.style.opacity = `${scroll.curve(2 / 8, 1 / 8)}`;
     article04Ref.current.style.opacity = `${scroll.curve(3 / 8, 1 / 8)}`;
+
+    if (scroll.visible(4 / 8, 3 / 8)) {
+      fixed.style.display = "flex";
+      fixed.style.opacity = `${scroll.curve(4 / 8, 3 / 8)}`;
+    } else {
+      fixed.style.display = "none";
+    }
+
     article08Ref.current.style.opacity = `${scroll.range(7 / 8, 1 / 8)}`;
   });
 
