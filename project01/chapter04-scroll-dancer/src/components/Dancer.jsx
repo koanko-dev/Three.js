@@ -5,6 +5,7 @@ import {
   Box,
   Circle,
   Points,
+  PositionalAudio,
   useAnimations,
   useGLTF,
   useScroll,
@@ -355,6 +356,15 @@ const Dancer = () => {
             alphaTest={0.001}
           />
         </Points>
+
+        {/* 음악이 입체감있게 들리도록 drei의 PositionalAudio를 사용 */}
+        <PositionalAudio
+          position={[-24, 0, 0]}
+          autoplay
+          url="/audio/bgm.mp3"
+          distance={50}
+          loop
+        />
       </>
     );
   }
