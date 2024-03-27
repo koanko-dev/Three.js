@@ -287,7 +287,7 @@ const Dancer = () => {
         />
         <pointLight
           position={[0, 5, 0]}
-          intensity={0}
+          intensity={45}
           castShadow
           receiveShadow
         />
